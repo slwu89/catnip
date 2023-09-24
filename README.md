@@ -1,2 +1,2 @@
 # catnip
-notes about Cats
+notes about Cats, aka CATegorical Notes In Progress
