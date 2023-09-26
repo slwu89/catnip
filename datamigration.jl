@@ -15,15 +15,19 @@ end
 # pretty graphviz settings
 to_graphviz(SchDDS,graph_attrs=Dict("dpi"=>"72","size"=>"4","ratio"=>"expand"))
 
-dds = DDS()
-add_parts!(dds, :X, 3, Φ=[2,3,1])
+dds = @acset DDS begin
+  X=7
+  Φ=[4,4,5,5,5,7,6]
+end
 X = SchDDS[:X]
 
-M = @migration SchGraph SchDDS begin
-    V => X
-    E => X
-    src => id(X)
-    tgt => Φ
+F = @migration SchGraph SchDDS begin
+  V => X
+  E => X
+  src => id(X)
+  tgt => Φ
 end
 
-g = migrate(dds, M)
+g = migrate(Graph, dds, F)
+
+to_graphviz(g,node_labels=true,edge_labels=true)
