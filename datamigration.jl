@@ -59,7 +59,27 @@ end
 # ex from Functorial Data Migration paper
 
 @present C(FreeSchema) begin
-  
+  (T1,T2)::Ob
+  (SSN,First,Last,Salary)::AttrType
+  ssn::Attr(T1,SSN)
+  first_t1::Attr(T1,First)
+  last_t1::Attr(T1,First)
+  first_t2::Attr(T2,First)
+  last_t2::Attr(T2,First)
+  salary::Attr(T2,Salary)
+end
+
+@acset_type C_data(C)
+
+C_inst = @acset C_data{String,String,String,Int} begin
+  T1=3
+  ssn=["115-234","122-988","198-877"]
+  first_t1=["Bob","Alice","Sue"]
+  last_t1=["Smith","Smith","Jones"]
+  T2=4
+  first_t2=["Alice","Sam","Sue","Carl"]
+  last_t2=["Jones","Miller","Smith","Pratt"]
+  salary=[100,150,300,200]
 end
 
 # ----------------------------------------------------------------------

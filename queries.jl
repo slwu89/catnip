@@ -1,63 +1,59 @@
-using Catlab, 
-    Catlab.CategoricalAlgebra, Catlab.WiringDiagrams, Catlab.Programs,
-    Catlab.Graphics, Catlab.Graphs
-using Graphviz_jll
+using Catlab, DataFrames
 
-@present FamilySchema(FreeSchema) begin
-    (Pair,Person,Child)::Ob
-    p::Hom(Pair,Person)
-    c::Hom(Pair,Child)
-
-    Name::AttrType
-    p_name::Attr(Person,Name)
-    c_name::Attr(Child,Name)
+@present FamilySchema <: SchGraph begin 
+    NameType::AttrType
+    name::Attr(V,NameType)
 end
 
-to_graphviz(FamilySchema)
+to_graphviz(FamilySchema,graph_attrs=Dict(:dpi=>"72",:size=>"4",:ratio=>"expand"))
 
-@acset_type FamilyData(FamilySchema, index=[:p, :c])
+# at this point, an interesting observation to make is that this is exactly a graph
+# with named vertices, which makes sense, the relationship is directed.
+# so the edges are also like a subset of the product of vertices.
 
+@acset_type FamilyData(FamilySchema, index=[:p, :c]) <: AbstractGraph
+
+
+names = ["Loid","Yor","Van","Trisha","Gendo","Yui","Anya","Alphonse","Ed","Shinji","Rei"]
 Families = FamilyData{String}()
 
-add_parts!(Families, :Person, 5, p_name=["Loid","Yor","Van","Trisha","Gendo"])
-add_parts!(Families, :Child, 4, c_name=["Anya","Alphonse","Ed","Shinji"])
+add_parts!(Families, :V, length(names), name=names)
 add_parts!(
-    Families, 
-    :Pair, 
-    7,
-    p = [
-        only(incident(Families, "Loid", :p_name)),
-        only(incident(Families, "Yor", :p_name)),
-        only(incident(Families, "Van", :p_name)),
-        only(incident(Families, "Van", :p_name)),
-        only(incident(Families, "Trisha", :p_name)),
-        only(incident(Families, "Trisha", :p_name)),
-        only(incident(Families, "Gendo", :p_name))
+    Families, :E, 10,
+    src = [
+        only(incident(Families, "Loid", :name)),
+        only(incident(Families, "Yor", :name)),
+        only(incident(Families, "Van", :name)),
+        only(incident(Families, "Trisha", :name)),
+        only(incident(Families, "Van", :name)),
+        only(incident(Families, "Trisha", :name)),
+        only(incident(Families, "Gendo", :name)),
+        only(incident(Families, "Gendo", :name)),
+        only(incident(Families, "Yui", :name)),
+        only(incident(Families, "Yui", :name))
     ],
-    c = [
-        only(incident(Families, "Anya", :c_name)),
-        only(incident(Families, "Anya", :c_name)),
-        only(incident(Families, "Alphonse", :c_name)),
-        only(incident(Families, "Alphonse", :c_name)),
-        only(incident(Families, "Ed", :c_name)),
-        only(incident(Families, "Ed", :c_name)),
-        only(incident(Families, "Shinji", :c_name))
+    tgt = [
+        only(incident(Families, "Anya", :name)),
+        only(incident(Families, "Anya", :name)),
+        only(incident(Families, "Alphonse", :name)),
+        only(incident(Families, "Alphonse", :name)),
+        only(incident(Families, "Ed", :name)),
+        only(incident(Families, "Ed", :name)),
+        only(incident(Families, "Shinji", :name)),
+        only(incident(Families, "Rei", :name)),
+        only(incident(Families, "Shinji", :name)),
+        only(incident(Families, "Rei", :name))
     ]
 )
 
-# get 
+to_graphviz(Families,node_labels=:name)
 
-basic_query = @relation (Person=parent,Child=child,Pair=p) begin
-    Pair(_id=p, p=parent, c=child)
-    Person(_id=parent)
-    Child(_id=child)
+
+basic_query = @relation (E=e,parent=parentname,child=childname) begin
+    E(_id=e, src=parent, tgt=child)
+    V(_id=parent, name=parentname)
+    V(_id=child, name=childname)
 end
 to_graphviz(basic_query,box_labels=:name,junction_labels=:variable)
 
 result = query(Families, basic_query)
-
-family_graph = Graph(
-    Families,
-    Dict(:V => :Person, :E => :Pair),
-    Dict(:src => :p, :tgt => :c)
-)
