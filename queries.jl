@@ -56,4 +56,7 @@ basic_query = @relation (E=e,parent=parentname,child=childname) begin
 end
 to_graphviz(basic_query,box_labels=:name,junction_labels=:variable)
 
-result = query(Families, basic_query)
+query(Families, basic_query)
+
+query(Families, basic_query, (childname="Anya",))
+query(Families, basic_query, (parentname="Gendo",))
