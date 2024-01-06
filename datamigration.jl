@@ -1,6 +1,94 @@
 # here we are going to figure out general data migrations. they are pretty confusing.
-using Catlab
-# i guess DataMigrations.jl will be needed soon, after the next Catlab version upgrade
+using Catlab, DataMigrations
+
+# ----------------------------------------------------------------------
+# conjunctive migrations
+
+lab_graph = @acset LabeledGraph{String} begin
+    V = 5
+    label = ["Alice","Bob","Carol","Dan","Emily"]
+    E = 6
+    src = [1,1,3,3,3,5]
+    tgt = [2,3,2,4,5,3]
+end
+
+@present SchSet(FreeSchema) begin
+  X::Ob
+end
+
+@present SchLabeledSet <: SchSet begin
+  Label::AttrType
+  label::Attr(X,Label)
+end
+
+@acset_type LabeledSet(SchLabeledSet)
+
+# ----------------------------------------------------------------------
+# migration 1: extract all the edges
+
+# extract the edges
+M = @migration SchLabeledSet SchLabeledGraph begin
+  X => V
+  Label => Label
+  label => label
+end
+
+migrate(LabeledSet{String}, lab_graph, M)
+
+# is this just a delta migration?
+F = @finfunctor SchLabeledSet SchLabeledGraph begin
+  X => V
+  Label => Label
+  label => label
+end
+
+Δ = DataMigrationFunctor(F, LabeledGraph{String}, LabeledSet{String})
+Δ(lab_graph)
+
+
+# ----------------------------------------------------------------------
+# migration 1: use conjunctive query to extract just some edges
+
+M = @migration SchLabeledSet SchLabeledGraph begin
+  X => @join begin
+      v::V
+      l::Label
+      (f:v→l)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
+      (g:v→l)::(y->"yes")
+  end
+  Label => Label
+  label => begin v => label; l => id(Label) end
+end
+
+# M_nodes = @migration SchLabeledGraph SchLabeledGraph begin
+#     V => @join begin
+#         v::V
+#         l::Label
+#         (f:v→l)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
+#         (g:v→l)::(y->"yes")
+#     end
+#     E => E
+#     Label => Label
+#     label => begin l => label end
+#     src => begin v => src; l => label∘src end
+#     tgt => begin v => tgt; l => label∘tgt end
+# end
+
+
+# M_nodes = @migration SchLabeledGraph SchLabeledGraph begin
+#   V => @join begin
+#       v::V
+#       l::Label
+#       (f:v→l)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
+#       (g:v→l)::(y->"yes")
+#   end
+#   E => @empty
+#   Label => Label
+# end
+
+# ----------------------------------------------------------------------
+# old stuff
+
 
 @present SchSet(FreeSchema) begin
   X::Ob
@@ -81,6 +169,3 @@ C_inst = @acset C_data{String,String,String,Int} begin
   last_t2=["Jones","Miller","Smith","Pratt"]
   salary=[100,150,300,200]
 end
-
-# ----------------------------------------------------------------------
-# general conjunctive migrations
