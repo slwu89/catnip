@@ -24,9 +24,9 @@ end
 @acset_type LabeledSet(SchLabeledSet)
 
 # ----------------------------------------------------------------------
-# migration 1: extract all the edges
+# migration 1: extract all the nodes
 
-# extract the edges
+# extract the nodes
 M = @migration SchLabeledSet SchLabeledGraph begin
   X => V
   Label => Label
@@ -47,7 +47,7 @@ end
 
 
 # ----------------------------------------------------------------------
-# migration 1: use conjunctive query to extract just some edges
+# migration 1: use conjunctive query to extract just some nodes
 
 M = @migration SchLabeledSet SchLabeledGraph begin
   X => @join begin
@@ -57,34 +57,17 @@ M = @migration SchLabeledSet SchLabeledGraph begin
       (g:v→l)::(y->"yes")
   end
   Label => Label
-  label => begin v => label; l => id(Label) end
+  label =>  v ⋅ label
 end
 
-# M_nodes = @migration SchLabeledGraph SchLabeledGraph begin
-#     V => @join begin
-#         v::V
-#         l::Label
-#         (f:v→l)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
-#         (g:v→l)::(y->"yes")
-#     end
-#     E => E
-#     Label => Label
-#     label => begin l => label end
-#     src => begin v => src; l => label∘src end
-#     tgt => begin v => tgt; l => label∘tgt end
-# end
+F = functor(M)
+
+# let's examine what we've got here in more detail
+to_graphviz(presentation(dom(F)))
 
 
-# M_nodes = @migration SchLabeledGraph SchLabeledGraph begin
-#   V => @join begin
-#       v::V
-#       l::Label
-#       (f:v→l)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
-#       (g:v→l)::(y->"yes")
-#   end
-#   E => @empty
-#   Label => Label
-# end
+migrate(LabeledSet{String}, lab_graph, M)
+
 
 # ----------------------------------------------------------------------
 # old stuff
