@@ -47,7 +47,7 @@ end
 
 
 # ----------------------------------------------------------------------
-# migration 1: use conjunctive query to extract just some nodes
+# migration 2: use conjunctive query to extract just some nodes
 
 M = @migration SchLabeledSet SchLabeledGraph begin
   X => @join begin
@@ -65,14 +65,78 @@ F = functor(M)
 # let's examine what we've got here in more detail
 to_graphviz(presentation(dom(F)))
 
-
 migrate(LabeledSet{String}, lab_graph, M)
 
 
 # ----------------------------------------------------------------------
+# migration 3: extract just some nodes, but stay in the schema for graphs
+
+M = @migration SchLabeledGraph SchLabeledGraph begin
+  V => @join begin
+      v::V
+      l::Label
+      (f:v→l)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
+      (g:v→l)::(y->"yes")
+  end
+  E => @unit
+  Label => Label
+  label =>  v ⋅ label
+end
+
+
+# ----------------------------------------------------------------------
+# migration 4: extract the subnetwork
+
+M = @migration SchLabeledGraph SchLabeledGraph begin
+  V => @join begin
+      v::V
+      l::Label
+      (f:v→l)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
+      (g:v→l)::(y->"yes")
+  end
+  E => @join begin
+    (v₁,v₂)::V
+    e::E
+    (l₁,l₂)::Label
+
+    src(e) == v₁
+    tgt(e) == v₂
+
+    (f1:v₁→l₁)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
+    (g1:v₁→l₁)::(y->"yes")
+
+    (f2:v₂→l₂)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
+    (g2:v₂→l₂)::(y->"yes")
+  end
+  Label => Label
+  label =>  v ⋅ label
+  src => (v => v₁; l => l₁; f => f1; g => g1)
+  tgt => (v => v₂; l => l₂; f => f2; g => g2)
+end
+
+
+h = @migrate Graph g begin
+  V => @join begin
+    v::V
+    (e₁, e₂)::E
+    (t: e₁ → v)::tgt
+    (s: e₂ → v)::src
+  end
+  E => @join begin
+    (v₁, v₂)::V
+    (e₁, e₂, e₃)::E
+    (t₁: e₁ → v₁)::tgt
+    (s₁: e₂ → v₁)::src
+    (t₂: e₂ → v₂)::tgt
+    (s₂: e₃ → v₂)::src
+  end
+  src => (v => v₁; e₁ => e₁; e₂ => e₂; t => t₁; s => s₁)
+  tgt => (v => v₂; e₁ => e₂; e₂ => e₃; t => t₂; s => s₂)
+end
+
+
+# ----------------------------------------------------------------------
 # old stuff
-
-
 @present SchSet(FreeSchema) begin
   X::Ob
 end
