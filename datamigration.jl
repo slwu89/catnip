@@ -71,17 +71,17 @@ migrate(LabeledSet{String}, lab_graph, M)
 # ----------------------------------------------------------------------
 # migration 3: extract just some nodes, but stay in the schema for graphs
 
-M = @migration SchLabeledGraph SchLabeledGraph begin
-  V => @join begin
-      v::V
-      l::Label
-      (f:v→l)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
-      (g:v→l)::(y->"yes")
-  end
-  E => @unit
-  Label => Label
-  label =>  v ⋅ label
-end
+# M = @migration SchLabeledGraph SchLabeledGraph begin
+#   V => @join begin
+#       v::V
+#       l::Label
+#       (f:v→l)::(x->label(x) ∈ ["Alice","Bob"] ? "yes" : "no")
+#       (g:v→l)::(y->"yes")
+#   end
+#   E => @unit
+#   Label => Label
+#   label =>  v ⋅ label
+# end
 
 
 # ----------------------------------------------------------------------
@@ -114,26 +114,17 @@ M = @migration SchLabeledGraph SchLabeledGraph begin
   tgt => (v => v₂; l => l₂; f => f2; g => g2)
 end
 
-
-h = @migrate Graph g begin
-  V => @join begin
-    v::V
-    (e₁, e₂)::E
-    (t: e₁ → v)::tgt
-    (s: e₂ → v)::src
-  end
-  E => @join begin
-    (v₁, v₂)::V
-    (e₁, e₂, e₃)::E
-    (t₁: e₁ → v₁)::tgt
-    (s₁: e₂ → v₁)::src
-    (t₂: e₂ → v₂)::tgt
-    (s₂: e₃ → v₂)::src
-  end
-  src => (v => v₁; e₁ => e₁; e₂ => e₂; t => t₁; s => s₁)
-  tgt => (v => v₂; e₁ => e₂; e₂ => e₃; t => t₂; s => s₂)
+lab_graph = @acset LabeledGraph{String} begin
+  V = 5
+  label = ["Alice","Bob","Carol","Dan","Emily"]
+  E = 6
+  src = [1,1,3,3,3,5]
+  tgt = [2,3,2,4,5,3]
 end
 
+to_graphviz(lab_graph, node_labels=:label)
+
+lab_graph_mig = migrate(LabeledGraph{String}, lab_graph, M)
 
 # ----------------------------------------------------------------------
 # old stuff
