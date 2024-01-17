@@ -127,6 +127,39 @@ to_graphviz(lab_graph, node_labels=:label)
 lab_graph_mig = migrate(LabeledGraph{String}, lab_graph, M)
 
 # ----------------------------------------------------------------------
+# more complex migration problem
+
+@present ComplexNetworkSch(FreeSchema) begin
+  (A,B,EdgeA2A,EdgeA2B)::Ob
+  src_A2A::Hom(EdgeA2A,A)
+  tgt_A2A::Hom(EdgeA2A,A)
+  src_A2B::Hom(EdgeA2B,A)
+  tgt_A2B::Hom(EdgeA2B,B)
+
+  NameType::AttrType
+  a_name::Attr(A,NameType)
+  b_name::Attr(B,NameType)
+end
+
+to_graphviz(ComplexNetworkSch)
+
+@acset_type ComplexNetworkData(ComplexNetworkSch, index=[:src_A2A,:tgt_A2A,:src_A2B,:tgt_A2B])
+
+network_data = @acset ComplexNetworkData{String} begin
+  A=6
+  a_name="a" .* string.(1:6)
+  B=4
+  b_name="b" .* string.(1:4)
+  EdgeA2A=3
+  src_A2A=[1,2,4]
+  tgt_A2A=[3,3,5]
+  EdgeA2B=9
+  src_A2B=[1,1,1,3,3,2,5,5,6]
+  tgt_A2B=[1,2,3,2,3,3,3,4,4]
+end
+
+
+# ----------------------------------------------------------------------
 # old stuff
 @present SchSet(FreeSchema) begin
   X::Ob
