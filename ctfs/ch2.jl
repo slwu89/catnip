@@ -24,9 +24,10 @@ f=FinFunction([1,2,4,1],X,Y)
 
 # use `image` to do this
 im_f = image(f)
-@test length(apex(cone(im_f))) == 3
+@test length(apex(im_f)) == 3
+@test collect(legs(im_f)[1]) == [1,2,4]
 # image as subset of the codomain, Y
-to_graphviz(legs(cone(im_f))[1])
+to_graphviz(legs(im_f)[1])
 
 # ex 2.1.2.8
 X = TypeSet(Int)
