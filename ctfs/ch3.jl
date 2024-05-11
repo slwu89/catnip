@@ -61,18 +61,27 @@ X = @acset LabeledSet{Symbol} begin
     label=[:a,:b,:c,:d]
 end
 
-Y = @acset LabeledSet{Int} begin
+Y = @acset LabeledSet{Symbol} begin
     X=3
-    label=1:3
+    label=Symbol.(1:3)
 end 
 
-apex(product(X,Y,loose=true))
-coproduct(X,Y)
+g = (Label=FinFunction(Dict([l=>l for l in X[:,:label]])),)
+h = (Label=FinFunction(Dict([l=>l for l in Y[:,:label]])),)
+coproduct(X,Y, type_components=[g,h])
 
-# colimit(ObjectPair(X, Y, LooseACSetTransformation))
+colimit(Tuple{LabeledSet{Symbol},LooseACSetTransformation},
+        DiscreteDiagram([X,Y]);
+        type_components=[g,h]) |> apex
+
+
 
 X = FinSet(4)
 Y = FinSet(3)
 XuY = coproduct(X,Y)
 
 @test length(apex(XuY)) == 7
+
+# coproduct is a colimit, and it is like a least upper bound.
+# so for anything else which is an upper bound, the universal
+# property says theres a unique morphism from it into the imposter.
