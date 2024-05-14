@@ -80,8 +80,70 @@ X = FinSet(4)
 Y = FinSet(3)
 XuY = coproduct(X,Y)
 
+i₁ = coproj1(XuY)
+i₂ = coproj2(XuY)
 @test length(apex(XuY)) == 7
 
 # coproduct is a colimit, and it is like a least upper bound.
 # so for anything else which is an upper bound, the universal
 # property says theres a unique morphism from it into the imposter.
+
+A = FinSet(10)
+f = FinFunction([1,2,3,4],X,A)
+g = FinFunction([5,6,7],Y,A)
+
+fg = universal(XuY, Cospan(f,g))
+
+# manually check for universal property
+@test force(compose(i₁, fg)) == f
+@test force(compose(i₂, fg)) == g
+
+# ----------------------------------------------------------------------
+# 3.2 Finite Limits in Set
+
+X = @acset LabeledSet{Symbol} begin
+    X=5
+    label=Symbol.(1:5)
+end
+
+Y = @acset LabeledSet{Symbol} begin
+    X=3
+    label=[:a,:b,:c]
+end
+
+Z = @acset LabeledSet{Symbol} begin
+    X=3
+    label=[:r,:g,:b]
+end
+
+f = LooseACSetTransformation((X=[3,3,1,3,2],), (Label=x->nothing,), X, Z)
+g = LooseACSetTransformation((X=[3,2,3],), (Label=x->nothing,), Y, Z)
+
+lim = pullback(f,g, product_attrs=true)
+
+XxcY = ob(lim)
+π₁ = proj1(lim)
+π₂ = proj2(lim)
+
+# make sure the square commutes
+@test is_isomorphic(
+    ob(force(compose(π₁, f))(XxcY)),
+    ob(force(compose(π₂, g))(XxcY))
+)
+
+# if Z is one element, then its the product
+Z = @acset LabeledSet{Symbol} begin
+    X=1
+    label=[:r]
+end
+
+f = LooseACSetTransformation((X=[1,1,1,1,1],), (Label=x->nothing,), X, Z)
+g = LooseACSetTransformation((X=[1,1,1],), (Label=x->nothing,), Y, Z)
+
+lim = pullback(f,g, product_attrs=true)
+XxcY = ob(lim)
+
+@test is_isomorphic(
+    XxcY,
+    ob(product(X,Y,loose=true))
+)
